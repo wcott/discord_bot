@@ -293,7 +293,6 @@ async def boot_non_roles():
             if not (keeper_roles & roles):
                 boot.append(member)
 
-        test_shit_general_channel = discord.Object(id='502579735013097483')
         while not client.is_closed:
             for person in boot:
                 await client.kick(person)
