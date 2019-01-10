@@ -101,7 +101,7 @@ def increment_points(user, points, conn):
     :param user: an ID for a discord user
     :param points: int value
     :param conn: connection to the database
-    :return: user's point total
+    :return: tuple that contains the users points before the addition, and the curren total
     """
     increment_query = "UPDATE leaderboard SET points = points + {0} WHERE user = '{1}'".format(points, user)
     create_user_query = "INSERT INTO leaderboard (points, user) VALUES ({0}, '{1}')".format(points, user)
@@ -127,7 +127,8 @@ def increment_points(user, points, conn):
             with conn:
                 cur = conn.cursor()
                 cur.execute(get_user_point)
-                return cur.fetchone()[0]
+                current_points = cur.fetchone()[0]
+                return (int(current_points) - int(points), current_points)
 
         except Error as e:
             print('Failed to get {}\'s current points. Error is below.'.format(user))
@@ -172,7 +173,12 @@ def retrieve_gallery(user, conn):
     else:
         print("Error! Database connection was not established when querying a user's gallery.")
 
-def increment_points_wrapper(message):
+def get_member(member_id):
+    miniac_server = client.get_server(miniac_server_id)
+    member = miniac_server.get_member(member_id)
+    return member
+
+async def increment_points_wrapper(message):
     """
     This is a wrapper for the function to add points to a discord user.
     :param message: this is a discord message containing all the params to run this function
@@ -196,7 +202,7 @@ def increment_points_wrapper(message):
         return_message = 'You\'re missing a parameter. Please see the !brian documentation'
         return return_message
 
-    if '@' not in command_params[1]:
+    if '@' not in command_params[1] or re.search('[a-zA-Z]', command_params[1]):
         return_message = 'You need to tag a user with this command. Their name should appear blue in discord.'
         return return_message
 
@@ -211,11 +217,31 @@ def increment_points_wrapper(message):
     image_link = command_params[3]
     
     conn = sqlite3.connect(database)
-    user_points = increment_points(discord_user_id, points, conn)
+    before_points, user_points = increment_points(discord_user_id, points, conn)
     insert_link(discord_user_id, image_link, conn)
     conn.close
     if user_points == 1:
         return_message = ":metal:Congratulations, {}. You're on the board with 1 point!:metal:".format(message.server.get_member(discord_user_id).display_name)
+    elif user_points >= 10 and before_points < 10:
+        old_nick = message.server.get_member(discord_user_id).name
+        new_nick = "{0} {1}".format(old_nick, '\N{sign of the horns}')
+        await client.change_nickname(get_member(discord_user_id), new_nick)
+        return_message = ":metal:HOOTY HOO! You've earned your first emoji. FLEX ON THE HATERS WHO DON'T PAINT!:metal:"
+    elif user_points >= 20 and before_points < 20:
+        old_nick = message.server.get_member(discord_user_id).name
+        new_nick = "{0} {1}".format(old_nick, '\N{skull}')
+        await client.change_nickname(get_member(discord_user_id), new_nick)
+        return_message = ":crossed_swords:KACAW! You've earned your second emoji. HAIL AND KILL!:crossed_swords:"
+    elif user_points >= 30 and before_points < 30:
+        old_nick = message.server.get_member(discord_user_id).name
+        new_nick = "{0} {1}".format(old_nick, '\N{bomb}')
+        await client.change_nickname(get_member(discord_user_id), new_nick)
+        return_message = ":bomb:SKKKRT! You've earned your third emoji. YOU DA BOMB:bomb:"
+    elif user_points >= 50 and before_points < 50:
+        old_nick = message.server.get_member(discord_user_id).name
+        new_nick = "{0} {1}".format(old_nick, '\N{aubergine}')
+        await client.change_nickname(get_member(discord_user_id), new_nick)
+        return_message = ":eggplant:LORD ALMIGHTY! You've earned your fourth and final emoji. You've ascended to minipainting godhood:eggplant:"
     else:
         return_message = ":metal:Congratulations, {}. You now have {} points:metal:".format(message.server.get_member(discord_user_id).display_name,user_points)
 
@@ -227,14 +253,13 @@ def get_leaderboard(message):
     conn.close()
     discord_message = ''
     if leaderboard is None:
-        print("The leaderboard table does not exist.")
+        print("There was a problem querying the leaderboard table.")
+    elif not len(leaderboard):
+        return '```leaderboard is empty.```'.format(discord_message)
     else:
         for user in leaderboard:
             discord_message += '{}: {}\n'.format(message.server.get_member(user[0]).display_name, user[1])
-        if len(leaderboard):
-            return '```{}```'.format(discord_message)
-        else:
-            return '```leaderboard is empty.```'.format(discord_message)
+        return '```{}```'.format(discord_message)
 
 def get_gallery(message):
     # split out the various params
@@ -303,7 +328,7 @@ async def on_message(message):
     # Find string versions of the name and add them to a list
 
     if message.content.startswith('!add'):
-        discord_message = increment_points_wrapper(message)
+        discord_message = await increment_points_wrapper(message)
         await client.send_message(message.channel, discord_message)
 
     if message.content.startswith('!leaderboard'):
@@ -319,6 +344,9 @@ async def on_message(message):
 
     if message.content.startswith("!brian"):
         await client.send_message(message.channel, '{}'.format(brian()))
+
+    if message.content.startswith("!test"):
+        await client.send_message(message.channel, '\N{sign of the horns}')
 
 @client.event
 async def on_ready():
