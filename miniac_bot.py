@@ -9,6 +9,7 @@ from sqlite3 import Error
 TOKEN = ''
 client = discord.Client()
 database = "./points.db"
+miniac_server_id = ""
 
 def create_user_table(user, conn):
     """
@@ -18,7 +19,7 @@ def create_user_table(user, conn):
     :return: nothing
     """
     create_user_query = """CREATE TABLE IF NOT EXISTS '{0}' (
-                             id INTEGER PRIMARY KEY AUTOINCREMENT, 
+                             id INTEGER PRIMARY KEY AUTOINCREMENT,
                              link text
                            )""".format(user)
     if conn is not None:
@@ -178,14 +179,31 @@ def get_member(member_id):
     member = miniac_server.get_member(member_id)
     return member
 
+async def set_name(user_points, user_name, discord_user_id):
+    if user_points >= 10 and user_points < 20:
+        new_nick = "{0} {1}".format(user_name, '\N{sign of the horns}')
+        await client.change_nickname(get_member(discord_user_id), new_nick)
+
+    elif user_points >= 20 and user_points < 30:
+        new_nick = "{0} {1}".format(user_name, '\N{skull}')
+        await client.change_nickname(get_member(discord_user_id), new_nick)
+
+    elif user_points >= 30 and user_points < 50:
+        new_nick = "{0} {1}".format(user_name, '\N{bomb}')
+        await client.change_nickname(get_member(discord_user_id), new_nick)
+
+    elif user_points >= 50:
+        new_nick = "{0} {1}".format(user_name, '\N{aubergine}')
+        await client.change_nickname(get_member(discord_user_id), new_nick)
+
 async def increment_points_wrapper(message):
     """
     This is a wrapper for the function to add points to a discord user.
     :param message: this is a discord message containing all the params to run this function
     :return: a message to print out in discord
     """
-    
-    # The message to print out in discord 
+
+    # The message to print out in discord
     return_message = ''
     roles = []
     for role in message.author.roles:
@@ -198,54 +216,72 @@ async def increment_points_wrapper(message):
 
     # split out the various params
     command_params = message.content.split()
-    if len(command_params) != 4:
-        return_message = 'You\'re missing a parameter. Please see the !brian documentation'
+    try:
+        int(command_params[2])
+    except ValueError:
+        return_message = 'You need to use an integer when giving a user points.'
         return return_message
 
     if '@' not in command_params[1] or re.search('[a-zA-Z]', command_params[1]):
         return_message = 'You need to tag a user with this command. Their name should appear blue in discord.'
         return return_message
 
-    if not command_params[2].isdigit():
-        return_message = 'You need to use an integer when giving a user points.'
+    if len(command_params) == 3:
+        if "-" not in command_params[2]:
+            return_message = "You can only use this format of the command to remove points."
+            return return_message
+
+        # using the !add command to remove points
+        command = command_params[0]
+        # remove non digit characters like !, @, <, or >
+        discord_user_id = re.sub("\D", "", command_params[1])
+        points = command_params[2]
+
+        conn = sqlite3.connect(database)
+        before_points, user_points = increment_points(discord_user_id, points, conn)
+        conn.close
+        await set_name(user_points, message.server.get_member(discord_user_id).name, discord_user_id)
+        return_message = ":sob: Woops, {}. You now have {} points :sob:".format(message.server.get_member(discord_user_id).display_name,user_points)
         return return_message
 
-    command = command_params[0]
-    # remove non digit characters like !, @, <, or >
-    discord_user_id = re.sub("\D", "", command_params[1])
-    points = command_params[2]
-    image_link = command_params[3]
-    
-    conn = sqlite3.connect(database)
-    before_points, user_points = increment_points(discord_user_id, points, conn)
-    insert_link(discord_user_id, image_link, conn)
-    conn.close
-    if user_points == 1:
-        return_message = ":metal:Congratulations, {}. You're on the board with 1 point!:metal:".format(message.server.get_member(discord_user_id).display_name)
-    elif user_points >= 10 and before_points < 10:
-        old_nick = message.server.get_member(discord_user_id).name
-        new_nick = "{0} {1}".format(old_nick, '\N{sign of the horns}')
-        await client.change_nickname(get_member(discord_user_id), new_nick)
-        return_message = ":metal:HOOTY HOO! You've earned your first emoji. FLEX ON THE HATERS WHO DON'T PAINT!:metal:"
-    elif user_points >= 20 and before_points < 20:
-        old_nick = message.server.get_member(discord_user_id).name
-        new_nick = "{0} {1}".format(old_nick, '\N{skull}')
-        await client.change_nickname(get_member(discord_user_id), new_nick)
-        return_message = ":crossed_swords:KACAW! You've earned your second emoji. HAIL AND KILL!:crossed_swords:"
-    elif user_points >= 30 and before_points < 30:
-        old_nick = message.server.get_member(discord_user_id).name
-        new_nick = "{0} {1}".format(old_nick, '\N{bomb}')
-        await client.change_nickname(get_member(discord_user_id), new_nick)
-        return_message = ":bomb:SKKKRT! You've earned your third emoji. YOU DA BOMB:bomb:"
-    elif user_points >= 50 and before_points < 50:
-        old_nick = message.server.get_member(discord_user_id).name
-        new_nick = "{0} {1}".format(old_nick, '\N{aubergine}')
-        await client.change_nickname(get_member(discord_user_id), new_nick)
-        return_message = ":eggplant:LORD ALMIGHTY! You've earned your fourth and final emoji. You've ascended to minipainting godhood:eggplant:"
-    else:
-        return_message = ":metal:Congratulations, {}. You now have {} points:metal:".format(message.server.get_member(discord_user_id).display_name,user_points)
+    elif len(command_params) == 4:
+        # using the !add command to actually add points
+        command = command_params[0]
+        image_link = command_params[3]
+        # remove non digit characters like !, @, <, or >
+        discord_user_id = re.sub("\D", "", command_params[1])
+        points = command_params[2]
+        image_link = command_params[3]
 
-    return return_message
+        conn = sqlite3.connect(database)
+        before_points, user_points = increment_points(discord_user_id, points, conn)
+        insert_link(discord_user_id, image_link, conn)
+        conn.close
+        await set_name(user_points, message.server.get_member(discord_user_id).name, discord_user_id)
+        if user_points == 1:
+            return_message = "Congratulations, {}. You're on the board!".format(message.server.get_member(discord_user_id).display_name)
+
+        elif user_points >= 10 and before_points < 10:
+            return_message = ":metal: HOOTY HOO! You've earned your first emoji. FLEX ON THE HATERS WHO DON'T PAINT! :metal:"
+
+        elif user_points >= 20 and before_points < 20:
+            return_message = ":crossed_swords: KACAW! You've earned your second emoji. HAIL AND KILL! :crossed_swords:"
+
+        elif user_points >= 30 and before_points < 30:
+            return_message = ":bomb: SKKKRT! You've earned your third emoji. YOU DA BOMB :bomb:"
+
+        elif user_points >= 50 and before_points < 50:
+            return_message = ":eggplant: LORD ALMIGHTY! You've earned your fourth and final emoji. You've ascended to minipainting godhood :eggplant:"
+
+        else:
+            return_message = ":metal:Congratulations, {}. You now have {} points:metal:".format(message.server.get_member(discord_user_id).display_name,user_points)
+
+        return return_message
+
+    else:
+        return_message = 'You\'re missing a parameter. Please see the !brian documentation'
+        return return_message
+
 
 def get_leaderboard(message):
     conn = sqlite3.connect(database)
@@ -309,7 +345,7 @@ async def boot_non_roles():
         for server in client.servers:
             if server.name == 'Miniac':
                 miniac_server = server
-        
+
         boot = list()
         for member in miniac_server.members:
             roles = set()
