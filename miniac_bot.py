@@ -301,7 +301,7 @@ def get_gallery(message):
     # split out the various params
     command_params = message.content.split()
     if len(command_params) != 2:
-        return_message = 'You\'re missing a parameter. Please see the !help documentation'
+        return_message = 'You\'re missing a parameter. Please see the !brian documentation'
         return return_message
 
     if '@' not in command_params[1]:
