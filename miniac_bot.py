@@ -363,26 +363,23 @@ async def boot_non_roles():
 async def on_message(message):
     # Find string versions of the name and add them to a list
 
-    if message.content.startswith('!add'):
+    if message.content.startswith('!add '):
         discord_message = await increment_points_wrapper(message)
         await client.send_message(message.channel, discord_message)
 
-    if message.content.startswith('!leaderboard'):
+    if message.content == '!leaderboard':
         discord_message = get_leaderboard(message)
         await client.send_message(message.channel, discord_message)
 
-    if message.content.startswith('!gallery'):
+    if message.content.startswith('!gallery '):
         discord_private_message = get_gallery(message)
         await client.send_message(message.author, discord_private_message)
 
-    if message.content.startswith("!7years"):
-        await client.send_message(message.channel, 'https://i.imgur.com/0u1Uw3f.gif')
+    if message.content == "!7years":
+        await client.send_message(message.channel, 'https://i.imgur.com/9NYdTDj.gifv')
 
-    if message.content.startswith("!brian"):
+    if message.content == "!brian":
         await client.send_message(message.channel, '{}'.format(brian()))
-
-    if message.content.startswith("!test"):
-        await client.send_message(message.channel, '\N{sign of the horns}')
 
 @client.event
 async def on_ready():
