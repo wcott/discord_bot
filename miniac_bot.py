@@ -4,6 +4,7 @@ import discord
 import sqlite3
 import re
 import asyncio
+import random
 from sqlite3 import Error
 
 TOKEN = ''
@@ -139,11 +140,11 @@ def increment_points(user, points, conn):
 
 def retrieve_sorted_leaderboard(conn):
     """
-    Returns a list of sorted users highest to lowest organized by their point values.
+    Returns the top 10 users on the discord server ordered by points.
     :param: conn: connection to the database
     :return: list
     """
-    get_sorted_leaderboard_query = "SELECT user, points FROM leaderboard ORDER BY points DESC"
+    get_sorted_leaderboard_query = "SELECT user, points FROM leaderboard ORDER BY points DESC LIMIT 10"
     if conn is not None:
         try:
             cur = conn.cursor()
@@ -154,6 +155,27 @@ def retrieve_sorted_leaderboard(conn):
             print(e)
     else:
         print("Error! Database connection was not established when querying the order of the leaderboard.")
+
+def retrieve_user_points(conn, user):
+    """
+    Returns a specific user's point value.
+    :param: conn: connection to the database.
+    :param: user: the user in question
+    :return: string int value of their point total.
+    """
+    get_user_points_query = "SELECT points FROM leaderboard WHERE user = '{}'".format(user)
+    if conn is not None:
+        try:
+            cur = conn.cursor()
+            cur.execute(get_user_points_query)
+            return cur.fetchone()[0]
+        except TypeError:
+            return "0"
+        except Error as e:
+            print('Failed to retrieve {}\'s point total. Error is below.'.format(user))
+            print(e)
+    else:
+        print("Error! Database connection was not established when querying a user's point total.")
 
 def retrieve_gallery(user, conn):
     """
@@ -297,6 +319,43 @@ def get_leaderboard(message):
             discord_message += '{}: {}\n'.format(message.server.get_member(user[0]).display_name, user[1])
         return '```{}```'.format(discord_message)
 
+def get_points(message):
+    conn = sqlite3.connect(database)
+    command_params = message.content.split()
+    insults = [
+            "Looks like you have no points. Time to PAINT MORE MINIS!",
+            "0/10 did not enjoy how pretentious you come off when talking about having literally zero points. Nothing you painted has received points since 10 years ago... you know back when you were born.",
+            "Those unprimed and unpainted minis won't paint themselves! You have 0 points.",
+            "Sucks to suck! You have zero points!",
+            "Bro, do you even paint? You have zero points.",
+            "Sometimes I think I'm unproductive, and then I remember you exist. You have zero points!",
+            "Your beautiful even if you have zero points. I still love you.",
+            "I believe in you. In a week you'll be on the board. For now you have zero points, though."
+            ]
+    if len(command_params) == 1:
+        points = retrieve_user_points(conn, message.author.id)
+        if int(points):
+            return_message = "```{}: {}```".format(message.author.display_name, points)
+        else:
+            return_message = insults[random.randint(0,7)]
+
+        conn.close()
+        return return_message
+    elif len(command_params) == 2:
+        if '@' not in command_params[1] or re.search('[a-zA-Z]', command_params[1]):
+            return_message = 'You need to tag a user with this command. Their name should appear blue in discord.'
+            return return_message
+
+        discord_user_id = re.sub("\D", "", command_params[1])
+        points = retrieve_user_points(conn, discord_user_id)
+        return_message = "```{}: {}```".format(message.server.get_member(discord_user_id).display_name, points)
+        conn.close()
+        return return_message
+    else:
+        return_message = 'You have one too many parameters. Check !brian for help on how this command works.'
+        conn.close()
+        return return_message
+
 def get_gallery(message):
     # split out the various params
     command_params = message.content.split()
@@ -316,10 +375,13 @@ def get_gallery(message):
     conn.close()
     discord_private_message = ''
     index = 1
-    for link in gallery:
-        discord_private_message += '{}. {}\n'.format(index, link[0])
-        index += 1
-
+    try:
+        for link in gallery:
+            discord_private_message += '{}. {}\n'.format(index, link[0])
+            index += 1
+    except TypeError:
+        discord_private_message = "User has no gallery. Harass them to paint some minis!"
+    
     return discord_private_message
 
 def brian():
@@ -329,6 +391,8 @@ def brian():
     This returns the current point totals for everyone in the discord who has at least one point.\n
     `!gallery [discord_user]`\n
     This private messages you a discord user's personal gallery. These are all the pictures they've gotten points for. Make sure to actually tag the user, their name should appear blue.\n
+    `!points [discord_user]`\n
+    This command can be run with a parameter or without a parameter. If you want to find someone's point total, run "!points @[name-of-person]". If you want to know your own points, run "!points"\n
     `!7years` \n
     Never do this.\n
     `!add [discord_user] [points] [link]`\n
@@ -377,6 +441,9 @@ async def on_message(message):
 
     if message.content == "!7years":
         await client.send_message(message.channel, 'https://i.imgur.com/9NYdTDj.gifv')
+
+    if message.content.startswith('!points'):
+        await client.send_message(message.channel, get_points(message))
 
     if message.content == "!brian":
         await client.send_message(message.channel, '{}'.format(brian()))
