@@ -11,7 +11,7 @@ TOKEN = ''
 client = discord.Client()
 database = "./points.db"
 miniac_server_id = ""
-
+miniac_general_channel_id = "384751293409001476"
 def create_user_table(user, conn):
     """
     Create a table for a discord user that will contain links to their images.
@@ -402,6 +402,12 @@ def brian():
     """
     return return_message
 
+# Custom welcome message
+async def on_member_join(member):
+    print("Recognized that " + member.name + " joined")
+    await client.send_message(discord.Object(id=miniac_general_channel_id), 'Welcome!')
+    print("Sent message about " + member.name + " to #general")
+
 async def boot_non_roles():
         await client.wait_until_ready()
         miniac_server = ''
@@ -421,7 +427,7 @@ async def boot_non_roles():
         while not client.is_closed:
             for person in boot:
                 await client.kick(person)
-            await asyncio.sleep(86400) # task runs once a day
+            await asyncio.sleep(2592000) # task runs once a month
 
 @client.event
 async def on_message(message):
