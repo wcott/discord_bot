@@ -233,20 +233,24 @@ async def increment_points_wrapper(message):
 
     if 'Wight King' not in roles and 'Thrall' not in roles:
         # ah ah ah!
-        return_message = 'http://gph.is/15wY87J'
-        return return_message
+        return 'http://gph.is/15wY87J'
 
     # split out the various params
     command_params = message.content.split()
+
+    if len(command_params) < 3:
+        return "You are missing some parameters. Please see !brian for help on how to use this command."
+
+    if len(command_params) == 3:
+        if "-" not in command_params[2]:
+            return "You can only use this format of the command to remove points."
     try:
         int(command_params[2])
     except ValueError:
-        return_message = 'You need to use an integer when giving a user points.'
-        return return_message
+        return 'You need to use an integer when giving a user points.'
 
     if '@' not in command_params[1] or re.search('[a-zA-Z]', command_params[1]):
-        return_message = 'You need to tag a user with this command. Their name should appear blue in discord.'
-        return return_message
+        return 'You need to tag a user with this command. Their name should appear blue in discord.'
 
     if len(command_params) == 3:
         if "-" not in command_params[2]:
