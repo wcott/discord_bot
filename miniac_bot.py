@@ -378,15 +378,23 @@ def get_gallery(message):
     gallery = retrieve_gallery(discord_user_id, conn)
     conn.close()
     discord_private_message = ''
+    discord_private_message_list = []
     index = 1
     try:
         for link in gallery:
+            if((len(discord_private_message) + len(link[0])) > 2000):
+                discord_private_message_list.append(discord_private_message)
+                discord_private_message = ""
+
             discord_private_message += '{}. {}\n'.format(index, link[0])
             index += 1
+
+        # Append the final message that didn't make it to 2k characters
+        discord_private_message_list.append(discord_private_message)
     except TypeError:
-        discord_private_message = "User has no gallery. Harass them to paint some minis!"
-    
-    return discord_private_message
+        discord_private_message_list[0] = "User has no gallery. Harass them to paint some minis!"
+
+    return discord_private_message_list
 
 def brian():
     return_message = """
@@ -445,9 +453,11 @@ async def on_message(message):
         discord_message = get_leaderboard(message)
         await client.send_message(message.channel, discord_message)
 
-    if message.content.startswith('!gallery '):
-        discord_private_message = get_gallery(message)
-        await client.send_message(message.author, discord_private_message)
+    if message.content.startswith('!gallery'):
+        discord_private_message_list = get_gallery(message)
+        await client.send_message(message.author, "{0}'s Gallery".format(message.content.split()[1]))
+        for discord_message in discord_private_message_list:
+            await client.send_message(message.author, discord_message)
 
     if message.content == "!7years":
         await client.send_message(message.channel, 'https://i.imgur.com/9NYdTDj.gifv')
