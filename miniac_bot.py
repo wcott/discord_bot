@@ -437,7 +437,7 @@ async def boot_non_roles():
 async def on_message(message):
     # Find string versions of the name and add them to a list
 
-    if message.content.startswith('!add '):
+    if message.content.startswith('!add'):
         discord_message = await increment_points_wrapper(message)
         await client.send_message(message.channel, discord_message)
 
