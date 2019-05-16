@@ -329,7 +329,7 @@ def get_points(message):
             "Sucks to suck! You have zero points!",
             "Bro, do you even paint? You have zero points.",
             "Sometimes I think I'm unproductive, and then I remember you exist. You have zero points!",
-            "Your beautiful even if you have zero points. I still love you.",
+            "You're beautiful even if you have zero points. I still love you.",
             "I believe in you. In a week you'll be on the board. For now you have zero points, though."
             ]
     if len(command_params) == 1:
@@ -386,9 +386,9 @@ def get_gallery(message):
 
 def brian():
     return_message = """
-    Hi, I'm Brian. You can call me Bryguy. I'm you're friendly bot companion. Here are the commands you can do: \n
+    Hi, I'm Brian. You can call me Bryguy. I'm your friendly bot companion. Here are the commands you can do: \n
     `!leaderboard`\n
-    This returns the current point totals for everyone in the discord who has at least one point.\n
+    This returns the current point totals for the top 10 painters on the discord server.\n
     `!gallery [discord_user]`\n
     This private messages you a discord user's personal gallery. These are all the pictures they've gotten points for. Make sure to actually tag the user, their name should appear blue.\n
     `!points [discord_user]`\n
@@ -454,5 +454,5 @@ async def on_ready():
     print(client.user.name)
     print(client.user.id)
     print('------')
-client.loop.create_task(boot_non_roles())
+#client.loop.create_task(boot_non_roles())
 client.run(TOKEN)
