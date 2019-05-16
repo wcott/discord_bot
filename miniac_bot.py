@@ -12,6 +12,7 @@ client = discord.Client()
 database = "./points.db"
 miniac_server_id = ""
 miniac_general_channel_id = "384751293409001476"
+miniac_welcome_channel_id = "537337389400719360"
 def create_user_table(user, conn):
     """
     Create a table for a discord user that will contain links to their images.
@@ -415,9 +416,10 @@ def brian():
     return return_message
 
 # Custom welcome message
+@client.event
 async def on_member_join(member):
     print("Recognized that " + member.name + " joined")
-    await client.send_message(discord.Object(id=miniac_general_channel_id), 'Welcome!')
+    await client.send_message(discord.Object(id=miniac_general_channel_id), 'Welcome to the Miniac Discord, {0}! Make sure to check out the {1} channel for all the information and rules!'.format(member, discord.Object(id=miniac_welcome_channel_id)))
     print("Sent message about " + member.name + " to #general")
 
 async def boot_non_roles():
