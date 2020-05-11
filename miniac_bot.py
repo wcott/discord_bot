@@ -464,6 +464,8 @@ async def on_message(message):
     if message.content.startswith('!add'):
         discord_message = await increment_points_wrapper(message)
         await client.send_message(message.channel, discord_message)
+    if message.content == "!submit":
+        await client.send_message(message.channel, 'Submit your models for points with this form: https://forms.gle/FkvMWfyCVgAZvGLd6')
 
     if message.content == '!leaderboard':
         discord_message = get_leaderboard(message)
