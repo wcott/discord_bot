@@ -319,17 +319,23 @@ async def increment_points_wrapper(message):
 
 
 def get_leaderboard(message):
+    discord_message = ''
     conn = sqlite3.connect(database)
     leaderboard = retrieve_sorted_leaderboard(conn)
     conn.close()
     discord_message = ''
     if leaderboard is None:
-        print("There was a problem querying the leaderboard table.")
+        print("Leaderboard doesn't exist. Creating it now..")
+        conn = sqlite3.connect(database)
+        create_leaderboard_table(conn)
+        conn.close()
     elif not len(leaderboard):
         return '```leaderboard is empty.```'.format(discord_message)
     else:
         for user in leaderboard:
-            discord_message += '{}: {}\n'.format(message.server.get_member(user[0]).display_name, user[1])
+            member = message.server.get_member(user[0])
+            if member:
+                discord_message += '{}: {}\n'.format(member.display_name, user[1])
         return '```{}```'.format(discord_message)
 
 def get_points(message):
