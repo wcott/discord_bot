@@ -202,21 +202,31 @@ def get_member(member_id):
     member = miniac_server.get_member(member_id)
     return member
 
-async def set_name(user_points, user_name, discord_user_id):
-    if user_points >= 10 and user_points < 20:
-        new_nick = "{0} {1}".format(user_name, '\N{sign of the horns}')
+async def set_name(user_points, discord_member, discord_user_id):
+    #If possible, use the members nick name on the server before their account name
+    user_name = ''
+    try:
+        user_name = discord_member.nick
+    except AttributeError:
+        return 'This member has no nickname, will proceed using their user account name'
+    if not user_name:
+        user_name = discord_member.name
+
+    if user_points >= 50 and user_points < 120:
+        new_nick = "{0} {1}".format(user_name, '\N{money bag}')
+        print(new_nick)
         await client.change_nickname(get_member(discord_user_id), new_nick)
 
-    elif user_points >= 20 and user_points < 30:
-        new_nick = "{0} {1}".format(user_name, '\N{skull}')
+    elif user_points >= 120 and user_points < 400:
+        new_nick = "{0} {1}".format(user_name, '\N{crossed swords}')
         await client.change_nickname(get_member(discord_user_id), new_nick)
 
-    elif user_points >= 30 and user_points < 50:
-        new_nick = "{0} {1}".format(user_name, '\N{bomb}')
+    elif user_points >= 400 and user_points < 1000:
+        new_nick = "{0} {1}".format(user_name, '\N{crown}')
         await client.change_nickname(get_member(discord_user_id), new_nick)
 
-    elif user_points >= 50:
-        new_nick = "{0} {1}".format(user_name, '\N{aubergine}')
+    elif user_points >= 1000:
+        new_nick = "{0} {1}".format(user_name, '\N{banana}')
         await client.change_nickname(get_member(discord_user_id), new_nick)
 
 async def increment_points_wrapper(message):
@@ -267,7 +277,7 @@ async def increment_points_wrapper(message):
         conn = sqlite3.connect(database)
         before_points, user_points = increment_points(discord_user_id, points, conn)
         conn.close
-        await set_name(user_points, message.server.get_member(discord_user_id).name, discord_user_id)
+        await set_name(user_points, message.server.get_member(discord_user_id), discord_user_id)
         return_message = ":sob: Woops, {}. You now have {} points :sob:".format(message.server.get_member(discord_user_id).display_name,user_points)
         return return_message
 
@@ -284,21 +294,19 @@ async def increment_points_wrapper(message):
         before_points, user_points = increment_points(discord_user_id, points, conn)
         insert_link(discord_user_id, image_link, conn)
         conn.close
-        await set_name(user_points, message.server.get_member(discord_user_id).name, discord_user_id)
-        if user_points == 1:
-            return_message = "Congratulations, {}. You're on the board!".format(message.server.get_member(discord_user_id).display_name)
+        await set_name(user_points, message.server.get_member(discord_user_id).nick, discord_user_id)
 
-        elif user_points >= 10 and before_points < 10:
-            return_message = ":metal: HOOTY HOO! You've earned your first emoji. FLEX ON THE HATERS WHO DON'T PAINT! :metal:"
+        if user_points >= 50 and before_points < 50:
+            return_message = ":moneybag: HOOTY HOO! You've earned your first emoji. FLEX ON THE HATERS WHO DON'T PAINT! :moneybag:"
 
-        elif user_points >= 20 and before_points < 20:
+        elif user_points >= 120 and before_points < 120:
             return_message = ":crossed_swords: KACAW! You've earned your second emoji. HAIL AND KILL! :crossed_swords:"
 
-        elif user_points >= 30 and before_points < 30:
-            return_message = ":bomb: SKKKRT! You've earned your third emoji. YOU DA BOMB :bomb:"
+        elif user_points >= 400 and before_points < 400:
+            return_message = ":crown: SKKKRT! You've earned your third emoji. YOU DA KING :crown:"
 
-        elif user_points >= 50 and before_points < 50:
-            return_message = ":eggplant: LORD ALMIGHTY! You've earned your fourth and final emoji. You've ascended to minipainting godhood :eggplant:"
+        elif user_points >= 1000 and before_points < 1000:
+            return_message = ":banana: LORD ALMIGHTY! You've earned your fourth and final emoji. You've ascended to minipainting godhood :banana:"
 
         else:
             return_message = ":metal:Congratulations, {}. You now have {} points:metal:".format(message.server.get_member(discord_user_id).display_name,user_points)
