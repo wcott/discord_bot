@@ -216,7 +216,6 @@ async def set_name(user_points, discord_member, discord_user_id):
 
     # Everytime we award points, the emojis we award are removed, the person's bracket is
     # recalculated, and they are given the correct emoji so everything stays straight.
-    print(user_name)
     if '\N{money bag}' in user_name:
         user_name = user_name.replace('\N{money bag}', '')
         await client.change_nickname(get_member(discord_user_id), user_name.strip())
