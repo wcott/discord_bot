@@ -208,13 +208,12 @@ async def set_name(user_points, discord_member, discord_user_id):
     try:
         user_name = discord_member.nick
     except AttributeError:
-        return 'This member has no nickname, will proceed using their user account name'
+        print('This member has no nickname, will proceed using their user account name')
     if not user_name:
         user_name = discord_member.name
 
     if user_points >= 50 and user_points < 120:
         new_nick = "{0} {1}".format(user_name, '\N{money bag}')
-        print(new_nick)
         await client.change_nickname(get_member(discord_user_id), new_nick)
 
     elif user_points >= 120 and user_points < 400:
@@ -294,19 +293,22 @@ async def increment_points_wrapper(message):
         before_points, user_points = increment_points(discord_user_id, points, conn)
         insert_link(discord_user_id, image_link, conn)
         conn.close
-        await set_name(user_points, message.server.get_member(discord_user_id).nick, discord_user_id)
 
         if user_points >= 50 and before_points < 50:
             return_message = ":moneybag: HOOTY HOO! You've earned your first emoji. FLEX ON THE HATERS WHO DON'T PAINT! :moneybag:"
+            await set_name(user_points, message.server.get_member(discord_user_id), discord_user_id)
 
         elif user_points >= 120 and before_points < 120:
             return_message = ":crossed_swords: KACAW! You've earned your second emoji. HAIL AND KILL! :crossed_swords:"
+            await set_name(user_points, message.server.get_member(discord_user_id), discord_user_id)
 
         elif user_points >= 400 and before_points < 400:
             return_message = ":crown: SKKKRT! You've earned your third emoji. YOU DA KING :crown:"
+            await set_name(user_points, message.server.get_member(discord_user_id), discord_user_id)
 
         elif user_points >= 1000 and before_points < 1000:
             return_message = ":banana: LORD ALMIGHTY! You've earned your fourth and final emoji. You've ascended to minipainting godhood :banana:"
+            await set_name(user_points, message.server.get_member(discord_user_id), discord_user_id)
 
         else:
             return_message = ":metal:Congratulations, {}. You now have {} points:metal:".format(message.server.get_member(discord_user_id).display_name,user_points)
