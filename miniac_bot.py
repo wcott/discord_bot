@@ -216,21 +216,22 @@ async def set_name(user_points, discord_member, discord_user_id):
 
     # Everytime we award points, the emojis we award are removed, the person's bracket is
     # recalculated, and they are given the correct emoji so everything stays straight.
+    print(user_name)
     if '\N{money bag}' in user_name:
         user_name = user_name.replace('\N{money bag}', '')
-        await client.change_nickname(get_member(discord_user_id), user_name)
+        await client.change_nickname(get_member(discord_user_id), user_name.strip())
 
     if '\N{crossed swords}' in user_name:
         user_name = user_name.replace('\N{crossed swords}', '')
-        await client.change_nickname(get_member(discord_user_id), user_name)
+        await client.change_nickname(get_member(discord_user_id), user_name.strip())
 
     if '\N{crown}' in user_name:
         user_name = user_name.replace('\N{crown}', '')
-        await client.change_nickname(get_member(discord_user_id), user_name)
+        await client.change_nickname(get_member(discord_user_id), user_name.strip())
 
     if '\N{banana}' in user_name:
         user_name = user_name.replace('\N{banana}', '')
-        await client.change_nickname(get_member(discord_user_id), user_name)
+        await client.change_nickname(get_member(discord_user_id), user_name.strip())
 
     if user_points >= 50 and user_points < 120:
         new_nick = "{0} {1}".format(user_name, '\N{money bag}')
