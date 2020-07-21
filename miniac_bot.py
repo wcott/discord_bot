@@ -340,11 +340,10 @@ def get_leaderboard(message):
         y = 0
         while(x < 10):
             member = message.server.get_member(leaderboard[y][0])
-            y +=1
-            print(member)
             if member:
                 x +=1
                 discord_message += '{}: {}\n'.format(member.display_name, leaderboard[y][1])
+            y +=1
         return '```{}```'.format(discord_message)
 
 def get_points(message):
