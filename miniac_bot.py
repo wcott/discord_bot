@@ -141,11 +141,13 @@ def increment_points(user, points, conn):
 
 def retrieve_sorted_leaderboard(conn):
     """
-    Returns the top 10 users on the discord server ordered by points.
+    Returns the top 20 users on the discord server ordered by points.
     :param: conn: connection to the database
     :return: list
     """
-    get_sorted_leaderboard_query = "SELECT user, points FROM leaderboard ORDER BY points DESC LIMIT 10"
+    # We're querying for 20 people instead of 10 because sometimes the top 10 will include people who
+    # are no longer in the server. This way, we can sort the "None" types out and get a real top 10.
+    get_sorted_leaderboard_query = "SELECT user, points FROM leaderboard ORDER BY points DESC LIMIT 20"
     if conn is not None:
         try:
             cur = conn.cursor()
@@ -334,10 +336,15 @@ def get_leaderboard(message):
     elif not len(leaderboard):
         return '```leaderboard is empty.```'.format(discord_message)
     else:
-        for user in leaderboard:
-            member = message.server.get_member(user[0])
+        x = 0
+        y = 0
+        while(x < 10):
+            member = message.server.get_member(leaderboard[y][0])
+            y +=1
+            print(member)
             if member:
-                discord_message += '{}: {}\n'.format(member.display_name, user[1])
+                x +=1
+                discord_message += '{}: {}\n'.format(member.display_name, leaderboard[y][1])
         return '```{}```'.format(discord_message)
 
 def get_points(message):
