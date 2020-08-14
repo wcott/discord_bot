@@ -10,9 +10,9 @@ from sqlite3 import Error
 TOKEN = ''
 client = discord.Client()
 database = "./points.db"
-miniac_server_id = ""
-miniac_general_channel_id = "384751293409001476"
-miniac_welcome_channel_id = "537337389400719360"
+miniac_server_id = 0
+miniac_general_channel_id = 0
+miniac_welcome_channel_id = 0
 def create_user_table(user, conn):
     """
     Create a table for a discord user that will contain links to their images.
@@ -200,53 +200,51 @@ def retrieve_gallery(user, conn):
         print("Error! Database connection was not established when querying a user's gallery.")
 
 def get_member(member_id):
-    miniac_server = client.get_server(miniac_server_id)
-    member = miniac_server.get_member(member_id)
-    return member
+    return client.get_guild(miniac_server_id).get_member(member_id)
 
-async def set_name(user_points, discord_member, discord_user_id):
+async def set_name(user_points, member, discord_user_id):
     #If possible, use the members nick name on the server before their account name
     user_name = ''
     try:
-        user_name = discord_member.nick
+        user_name = member.nick
     except AttributeError:
         print('This member has no nickname, will proceed using their user account name')
     if not user_name:
-        user_name = discord_member.name
+        user_name = member.name
 
     # Everytime we award points, the emojis we award are removed, the person's bracket is
     # recalculated, and they are given the correct emoji so everything stays straight.
     if '\N{money bag}' in user_name:
         user_name = user_name.replace('\N{money bag}', '').strip()
-        await client.change_nickname(get_member(discord_user_id), user_name)
+        await member.edit(nick=user_name)
 
     if '\N{crossed swords}' in user_name:
         user_name = user_name.replace('\N{crossed swords}', '').strip()
-        await client.change_nickname(get_member(discord_user_id), user_name)
+        await member.edit(nick=user_name)
 
     if '\N{crown}' in user_name:
         user_name = user_name.replace('\N{crown}', '').strip()
-        await client.change_nickname(get_member(discord_user_id), user_name)
+        await member.edit(nick=user_name)
 
     if '\N{banana}' in user_name:
         user_name = user_name.replace('\N{banana}', '').strip()
-        await client.change_nickname(get_member(discord_user_id), user_name)
+        await member.edit(nick=user_name)
 
     if user_points >= 50 and user_points < 120:
         new_nick = "{0} {1}".format(user_name, '\N{money bag}')
-        await client.change_nickname(get_member(discord_user_id), new_nick)
+        await member.edit(nick=new_nick)
 
     elif user_points >= 120 and user_points < 400:
         new_nick = "{0} {1}".format(user_name, '\N{crossed swords}')
-        await client.change_nickname(get_member(discord_user_id), new_nick)
+        await member.edit(nick=new_nick)
 
     elif user_points >= 400 and user_points < 1000:
         new_nick = "{0} {1}".format(user_name, '\N{crown}')
-        await client.change_nickname(get_member(discord_user_id), new_nick)
+        await member.edit(nick=new_nick)
 
     elif user_points >= 1000:
         new_nick = "{0} {1}".format(user_name, '\N{banana}')
-        await client.change_nickname(get_member(discord_user_id), new_nick)
+        await member.edit(nick=new_nick)
 
 async def increment_points_wrapper(message):
     """
@@ -296,7 +294,7 @@ async def increment_points_wrapper(message):
         conn = sqlite3.connect(database)
         before_points, user_points = increment_points(discord_user_id, points, conn)
         conn.close
-        await set_name(user_points, message.server.get_member(discord_user_id), discord_user_id)
+        await set_name(user_points, get_member(discord_user_id), discord_user_id)
         return_message = ":sob: Woops, {}. You now have {} points :sob:".format(message.server.get_member(discord_user_id).display_name,user_points)
         return return_message
 
@@ -305,7 +303,7 @@ async def increment_points_wrapper(message):
         command = command_params[0]
         image_link = command_params[3]
         # remove non digit characters like !, @, <, or >
-        discord_user_id = re.sub("\D", "", command_params[1])
+        discord_user_id = int(re.sub("\D", "", command_params[1]))
         points = command_params[2]
         image_link = command_params[3]
 
@@ -314,7 +312,7 @@ async def increment_points_wrapper(message):
         insert_link(discord_user_id, image_link, conn)
         conn.close
 
-        await set_name(user_points, message.server.get_member(discord_user_id), discord_user_id)
+        await set_name(user_points, get_member(discord_user_id), discord_user_id)
         if user_points >= 50 and before_points < 50:
             return_message = ":moneybag: HOOTY HOO! You've earned your first emoji. FLEX ON THE HATERS WHO DON'T PAINT! :moneybag:"
 
@@ -328,7 +326,7 @@ async def increment_points_wrapper(message):
             return_message = ":banana: LORD ALMIGHTY! You've earned your fourth and final emoji. You've ascended to minipainting godhood :banana:"
 
         else:
-            return_message = ":metal:Congratulations, {}. You now have {} points:metal:".format(message.server.get_member(discord_user_id).display_name,user_points)
+            return_message = ":metal:Congratulations, {}. You now have {} points:metal:".format(client.get_guild(miniac_server_id).get_member(discord_user_id).display_name,user_points)
 
         return return_message
 
@@ -342,7 +340,7 @@ def get_leaderboard(message):
     conn = sqlite3.connect(database)
     leaderboard = retrieve_sorted_leaderboard(conn)
     conn.close()
-    discord_message = ''
+    discord_message = '' 
     if leaderboard is None:
         print("Leaderboard doesn't exist. Creating it now..")
         conn = sqlite3.connect(database)
@@ -353,8 +351,8 @@ def get_leaderboard(message):
     else:
         x = 0
         y = 0
-        while(x < 10):
-            member = message.server.get_member(leaderboard[y][0])
+        while(x < 10 and y < 20):
+            member = client.get_guild(miniac_server_id).get_member(int(leaderboard[y][0]))
             if member:
                 x +=1
                 discord_message += '{}: {}\n'.format(member.display_name, leaderboard[y][1])
@@ -388,9 +386,9 @@ def get_points(message):
             return_message = 'You need to tag a user with this command. Their name should appear blue in discord.'
             return return_message
 
-        discord_user_id = re.sub("\D", "", command_params[1])
+        discord_user_id = int(re.sub("\D", "", command_params[1]))
         points = retrieve_user_points(conn, discord_user_id)
-        return_message = "```{}: {}```".format(message.server.get_member(discord_user_id).display_name, points)
+        return_message = "```{}: {}```".format(client.get_guild(miniac_server_id).get_member(discord_user_id).display_name, points)
         conn.close()
         return return_message
     else:
@@ -411,7 +409,7 @@ def get_gallery(message):
 
     command = command_params[0]
     # remove non digit characters like !, @, <, or >
-    discord_user_id = re.sub("\D", "", command_params[1])
+    discord_user_id = int(re.sub("\D", "", command_params[1]))
     conn = sqlite3.connect(database)
     gallery = retrieve_gallery(discord_user_id, conn)
     conn.close()
@@ -456,14 +454,14 @@ def brian():
 @client.event
 async def on_member_join(member):
     print("Recognized that " + member.name + " joined")
-    await client.send_message(discord.Object(id=miniac_general_channel_id), 'Welcome to the Miniac Discord, <@{0}>! Make sure to check out the <#537337389400719360> channel for all the information and rules!'.format(member.id))
+    await client.get_channel(miniac_general_channel_id).send('Welcome to the Miniac Discord, {} Make sure to check out the <#537337389400719360> channel for all the information and rules!'.format(member.name))
     print("Sent message about " + member.name + " to #general")
 
 async def boot_non_roles():
         await client.wait_until_ready()
         miniac_server = ''
         keeper_roles = {'Wight King','Patreon','Rythm','Executioner','Zombie','Moose Fanclub','Dark Wizard','Acolyte','Zombie','Sepulchral Guard'}
-        for server in client.servers:
+        for server in client.guilds:
             if server.name == 'Miniac':
                 miniac_server = server
 
@@ -477,7 +475,7 @@ async def boot_non_roles():
 
         while not client.is_closed:
             for person in boot:
-                await client.kick(person)
+                await person.kick()
             await asyncio.sleep(2592000) # task runs once a month
 
 @client.event
@@ -486,28 +484,28 @@ async def on_message(message):
 
     if message.content.startswith('!add'):
         discord_message = await increment_points_wrapper(message)
-        await client.send_message(message.channel, discord_message)
+        await message.channel.send( discord_message)
     if message.content == "!submit":
-        await client.send_message(message.channel, 'Submit your models for points with this form: https://forms.gle/FkvMWfyCVgAZvGLd6')
+        await message.channel.send( 'Submit your models for points with this form: https://forms.gle/FkvMWfyCVgAZvGLd6')
 
     if message.content == '!leaderboard':
         discord_message = get_leaderboard(message)
-        await client.send_message(message.channel, discord_message)
+        await message.channel.send(discord_message)
 
     if message.content.startswith('!gallery'):
         discord_private_message_list = get_gallery(message)
-        await client.send_message(message.author, "{0}'s Gallery".format(message.content.split()[1]))
+        await message.channel.send("{}'s Gallery".format(message.author,message.content.split()[1]))
         for discord_message in discord_private_message_list:
-            await client.send_message(message.author, discord_message)
+            await message.channel.send("{}".format(discord_message))
 
     if message.content == "!7years":
-        await client.send_message(message.channel, 'https://i.imgur.com/9NYdTDj.gifv')
+        await message.channel.send( 'https://i.imgur.com/9NYdTDj.gifv')
 
     if message.content.startswith('!points'):
-        await client.send_message(message.channel, get_points(message))
+        await message.channel.send( get_points(message))
 
     if message.content == "!brian":
-        await client.send_message(message.channel, '{}'.format(brian()))
+        await message.channel.send('{}'.format(brian()))
 
 @client.event
 async def on_ready():
