@@ -288,14 +288,14 @@ async def increment_points_wrapper(message):
         # using the !add command to remove points
         command = command_params[0]
         # remove non digit characters like !, @, <, or >
-        discord_user_id = re.sub("\D", "", command_params[1])
+        discord_user_id = int(re.sub("\D", "", command_params[1]))
         points = command_params[2]
 
         conn = sqlite3.connect(database)
         before_points, user_points = increment_points(discord_user_id, points, conn)
         conn.close
         await set_name(user_points, get_member(discord_user_id), discord_user_id)
-        return_message = ":sob: Woops, {}. You now have {} points :sob:".format(message.server.get_member(discord_user_id).display_name,user_points)
+        return_message = ":sob: Woops, {}. You now have {} points :sob:".format(client.get_guild(miniac_server_id).get_member(discord_user_id).display_name,user_points)
         return return_message
 
     elif len(command_params) == 4:
@@ -494,9 +494,9 @@ async def on_message(message):
 
     if message.content.startswith('!gallery'):
         discord_private_message_list = get_gallery(message)
-        await message.channel.send("{}'s Gallery".format(message.author,message.content.split()[1]))
+        await message.author.send("{}'s Gallery".format(message.author,message.content.split()[1]))
         for discord_message in discord_private_message_list:
-            await message.channel.send("{}".format(discord_message))
+            await message.author.send("{}".format(discord_message))
 
     if message.content == "!7years":
         await message.channel.send( 'https://i.imgur.com/9NYdTDj.gifv')
