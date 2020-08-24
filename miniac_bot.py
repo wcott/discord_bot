@@ -347,7 +347,7 @@ def get_leaderboard(message):
         create_leaderboard_table(conn)
         conn.close()
     elif not len(leaderboard):
-        return '```leaderboard is empty.```'.format(discord_message)
+        return '```leaderboard is empty.```'
     else:
         x = 0
         y = 0
@@ -400,10 +400,8 @@ def get_gallery(message):
     # split out the various params
     command_params = message.content.split()
     if len(command_params) != 2:
-        return_message = 'You\'re missing a parameter. Please see the !brian documentation'
-        return return_message
-
-    if '@' not in command_params[1]:
+        command_params = [ command_params[0] , str(message.author.id)]
+    elif '@' not in command_params[1]:
         return_message = 'You need to tag a user with this command. Their name should appear blue in discord.'
         return return_message
 
@@ -428,7 +426,7 @@ def get_gallery(message):
         # Append the final message that didn't make it to 2k characters
         discord_private_message_list.append(discord_private_message)
     except TypeError:
-        discord_private_message_list[0] = "User has no gallery. Harass them to paint some minis!"
+        discord_private_message_list.append("User has no gallery. Harass them to paint some minis!")
 
     return discord_private_message_list
 
@@ -494,7 +492,10 @@ async def on_message(message):
 
     if message.content.startswith('!gallery'):
         discord_private_message_list = get_gallery(message)
-        await message.author.send("{}'s Gallery".format(message.author,message.content.split()[1]))
+        if len(message.content.split()) == 2:
+            await message.author.send("{}'s Gallery".format(message.content.split()[1]))
+        else:
+            await message.author.send("{}'s Gallery".format(message.author.mention))
         for discord_message in discord_private_message_list:
             await message.author.send("{}".format(discord_message))
 
