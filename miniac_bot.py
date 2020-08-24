@@ -7,12 +7,15 @@ import asyncio
 import random
 from sqlite3 import Error
 
-TOKEN = ''
+f = open("./discord_auth.txt")
+lines=f.readlines()
+TOKEN = lines[0] 
+miniac_server_id = lines[1]
+miniac_general_channel_id = lines[2]
+miniac_welcome_channel_id = lines[3]
+f.close()
 client = discord.Client()
 database = "./points.db"
-miniac_server_id = 0
-miniac_general_channel_id = 0
-miniac_welcome_channel_id = 0
 def create_user_table(user, conn):
     """
     Create a table for a discord user that will contain links to their images.
@@ -454,27 +457,6 @@ async def on_member_join(member):
     print("Recognized that " + member.name + " joined")
     await client.get_channel(miniac_general_channel_id).send('Welcome to the Miniac Discord, {} Make sure to check out the <#537337389400719360> channel for all the information and rules!'.format(member.name))
     print("Sent message about " + member.name + " to #general")
-
-async def boot_non_roles():
-        await client.wait_until_ready()
-        miniac_server = ''
-        keeper_roles = {'Wight King','Patreon','Rythm','Executioner','Zombie','Moose Fanclub','Dark Wizard','Acolyte','Zombie','Sepulchral Guard'}
-        for server in client.guilds:
-            if server.name == 'Miniac':
-                miniac_server = server
-
-        boot = list()
-        for member in miniac_server.members:
-            roles = set()
-            for miniac_role in member.roles:
-                roles.add(miniac_role.name)
-            if not (keeper_roles & roles):
-                boot.append(member)
-
-        while not client.is_closed:
-            for person in boot:
-                await person.kick()
-            await asyncio.sleep(2592000) # task runs once a month
 
 @client.event
 async def on_message(message):
