@@ -10,9 +10,9 @@ from sqlite3 import Error
 f = open("./discord_auth.txt")
 lines=f.readlines()
 TOKEN = lines[0] 
-miniac_server_id = lines[1]
-miniac_general_channel_id = lines[2]
-miniac_welcome_channel_id = lines[3]
+miniac_server_id = int(lines[1])
+miniac_general_channel_id = int(lines[2])
+miniac_welcome_channel_id = int(lines[3])
 f.close()
 client = discord.Client()
 database = "./points.db"
