@@ -452,7 +452,7 @@ def brian():
 @client.event
 async def on_member_join(member):
     print("Recognized that " + member.name + " joined")
-    await client.get_channel(miniac_general_channel_id).send('Welcome to the Miniac Discord, {} Make sure to check out the <#537337389400719360> channel for all the information and rules!'.format(member.name))
+    await client.get_channel(miniac_general_channel_id).send('Welcome to the Miniac Discord, {} Make sure to check out the <#537337389400719360> channel for all the information and rules!'.format(member.mention))
     print("Sent message about " + member.name + " to #general")
 
 async def boot_non_roles():
