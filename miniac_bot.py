@@ -202,11 +202,9 @@ def retrieve_gallery(user, conn):
     else:
         print("Error! Database connection was not established when querying a user's gallery.")
 
-def get_member(member_id):
-    return client.get_guild(miniac_server_id).get_member(member_id)
-
-async def set_name(user_points, member, discord_user_id):
+async def set_name(user_points, member_id, discord_user_id):
     #If possible, use the members nick name on the server before their account name
+    member = await client.get_guild(miniac_server_id).fetch_member(member_id)
     user_name = ''
     try:
         user_name = member.nick
@@ -214,7 +212,6 @@ async def set_name(user_points, member, discord_user_id):
         print('This member has no nickname, will proceed using their user account name')
     if not user_name:
         user_name = member.name
-
     # Everytime we award points, the emojis we award are removed, the person's bracket is
     # recalculated, and they are given the correct emoji so everything stays straight.
     if '\N{money bag}' in user_name:
@@ -297,8 +294,8 @@ async def increment_points_wrapper(message):
         conn = sqlite3.connect(database)
         before_points, user_points = increment_points(discord_user_id, points, conn)
         conn.close
-        await set_name(user_points, get_member(discord_user_id), discord_user_id)
-        return_message = ":sob: Woops, {}. You now have {} points :sob:".format(client.get_guild(miniac_server_id).get_member(discord_user_id).display_name,user_points)
+        await set_name(user_points, discord_user_id, discord_user_id)
+        return_message = ":sob: Woops, {}. You now have {} points :sob:".format(client.get_user(discord_user_id).display_name,user_points)
         return return_message
 
     elif len(command_params) == 4:
@@ -315,7 +312,7 @@ async def increment_points_wrapper(message):
         insert_link(discord_user_id, image_link, conn)
         conn.close
 
-        await set_name(user_points, get_member(discord_user_id), discord_user_id)
+        await set_name(user_points, discord_user_id, discord_user_id)
         if user_points >= 50 and before_points < 50:
             return_message = ":moneybag: HOOTY HOO! You've earned your first emoji. FLEX ON THE HATERS WHO DON'T PAINT! :moneybag:"
 
@@ -329,7 +326,7 @@ async def increment_points_wrapper(message):
             return_message = ":banana: LORD ALMIGHTY! You've earned your fourth and final emoji. You've ascended to minipainting godhood :banana:"
 
         else:
-            return_message = ":metal:Congratulations, {}. You now have {} points:metal:".format(client.get_guild(miniac_server_id).get_member(discord_user_id).display_name,user_points)
+            return_message = ":metal:Congratulations, {}. You now have {} points:metal:".format(client.get_user(discord_user_id).display_name,user_points)
 
         return return_message
 
@@ -355,7 +352,7 @@ def get_leaderboard(message):
         x = 0
         y = 0
         while(x < 10 and y < 20):
-            member = client.get_guild(miniac_server_id).get_member(int(leaderboard[y][0]))
+            member = client.get_user(int(leaderboard[y][0]))
             if member:
                 x +=1
                 discord_message += '{}: {}\n'.format(member.display_name, leaderboard[y][1])
@@ -391,7 +388,7 @@ def get_points(message):
 
         discord_user_id = int(re.sub("\D", "", command_params[1]))
         points = retrieve_user_points(conn, discord_user_id)
-        return_message = "```{}: {}```".format(client.get_guild(miniac_server_id).get_member(discord_user_id).display_name, points)
+        return_message = "```{}: {}```".format(client.get_user(discord_user_id).display_name, points)
         conn.close()
         return return_message
     else:
