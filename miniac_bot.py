@@ -14,7 +14,11 @@ miniac_server_id = int(lines[1])
 miniac_general_channel_id = int(lines[2])
 miniac_welcome_channel_id = int(lines[3])
 f.close()
-client = discord.Client()
+print(discord.__version__)
+intents = discord.Intents.default()
+intents.members = True
+
+client = discord.Client(intents=intents)
 database = "./points.db"
 def create_user_table(user, conn):
     """
