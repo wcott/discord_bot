@@ -344,6 +344,7 @@ def get_leaderboard(message):
     conn = sqlite3.connect(database)
     leaderboard = retrieve_sorted_leaderboard(conn)
     conn.close()
+    discord_message = '' 
     if leaderboard is None:
         print("Leaderboard doesn't exist. Creating it now..")
         conn = sqlite3.connect(database)
@@ -354,7 +355,7 @@ def get_leaderboard(message):
     else:
         x = 0
         y = 0
-        while(x < 10 and y < 20):
+        while(x < 10 and y < 20 and y < len(leaderboard)):
             member = client.get_user(int(leaderboard[y][0]))
             if member:
                 x +=1
