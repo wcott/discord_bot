@@ -344,7 +344,6 @@ def get_leaderboard(message):
     conn = sqlite3.connect(database)
     leaderboard = retrieve_sorted_leaderboard(conn)
     conn.close()
-    discord_message = '' 
     if leaderboard is None:
         print("Leaderboard doesn't exist. Creating it now..")
         conn = sqlite3.connect(database)
